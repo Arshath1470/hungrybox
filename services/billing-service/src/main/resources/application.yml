@@ -1,0 +1,35 @@
+server:
+  port: ${SERVER_PORT:8084}
+
+spring:
+  application:
+    name: billing-service
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/hb_billing?allowPublicKeyRetrieval=true&useSSL=false}
+    username: ${DB_USERNAME:hungrybox}
+    password: ${DB_PASSWORD:hungrybox}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+    consumer:
+      auto-offset-reset: earliest
+    producer:
+      acks: all
+
+hungrybox:
+  security:
+    jwt-secret: ${JWT_SECRET:dev-only-secret-change-me-before-deploying-0123456789abcdef}
+  billing:
+    max-transaction-amount: ${MAX_TRANSACTION_AMOUNT:5000}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}

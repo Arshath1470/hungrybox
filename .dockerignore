@@ -1,0 +1,7 @@
+**/target
+frontend
+k8s
+docs
+.github
+.git
+*.md

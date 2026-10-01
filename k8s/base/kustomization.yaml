@@ -1,0 +1,54 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: hungrybox
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: hungrybox
+    includeSelectors: false
+
+resources:
+  - namespace.yaml
+  - mysql.yaml
+  - kafka.yaml
+  - user-service.yaml
+  - restaurant-service.yaml
+  - order-service.yaml
+  - billing-service.yaml
+  - frontend.yaml
+  - ingress.yaml
+
+configMapGenerator:
+  - name: hungrybox-config
+    literals:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - RESTAURANT_SERVICE_URL=http://restaurant-service:8082
+      - DB_USERNAME=hungrybox
+      - MAX_TRANSACTION_AMOUNT=5000
+      - ADMIN_EMAIL=admin@hungrybox.dev
+  - name: mysql-init
+    files:
+      - init.sql=mysql-init.sql
+
+# Development values only. For a real cluster replace these with
+# Sealed Secrets / External Secrets, or create the secret out of band.
+secretGenerator:
+  - name: hungrybox-secrets
+    literals:
+      - DB_PASSWORD=hungrybox
+      - MYSQL_ROOT_PASSWORD=root-change-me
+      - JWT_SECRET=dev-only-secret-change-me-before-deploying-0123456789abcdef
+      - ADMIN_PASSWORD=Admin@12345
+
+images:
+  - name: ghcr.io/arshath1470/hungrybox-user-service
+    newTag: latest
+  - name: ghcr.io/arshath1470/hungrybox-restaurant-service
+    newTag: latest
+  - name: ghcr.io/arshath1470/hungrybox-order-service
+    newTag: latest
+  - name: ghcr.io/arshath1470/hungrybox-billing-service
+    newTag: latest
+  - name: ghcr.io/arshath1470/hungrybox-frontend
+    newTag: latest

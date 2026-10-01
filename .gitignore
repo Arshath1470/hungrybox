@@ -1,0 +1,20 @@
+# Maven / Java
+target/
+*.class
+*.log
+.flattened-pom.xml
+
+# Node
+node_modules/
+dist/
+coverage/
+
+# IDE / OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Local secrets
+.env
+k8s/overlays/*/secrets.env
