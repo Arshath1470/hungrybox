@@ -13,7 +13,7 @@ RUN --mount=type=cache,target=/root/.m2 \
  && cp services/${SERVICE}/target/${SERVICE}.jar application.jar \
  && java -Djarmode=tools -jar application.jar extract --layers --destination extracted
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 RUN addgroup -S -g 10001 app && adduser -S -u 10001 -G app app
 WORKDIR /app
 # Spring Boot layers: dependencies change rarely, application code changes often,
