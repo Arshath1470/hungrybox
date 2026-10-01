@@ -1,0 +1,47 @@
+# Path-based routing: the browser talks to one host, the Ingress fans requests
+# out to the service that owns each API prefix. Requires an NGINX ingress controller.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hungrybox
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: hungrybox.local
+      http:
+        paths:
+          - path: /api/users
+            pathType: Prefix
+            backend:
+              service:
+                name: user-service
+                port:
+                  name: http
+          - path: /api/restaurants
+            pathType: Prefix
+            backend:
+              service:
+                name: restaurant-service
+                port:
+                  name: http
+          - path: /api/orders
+            pathType: Prefix
+            backend:
+              service:
+                name: order-service
+                port:
+                  name: http
+          - path: /api/billing
+            pathType: Prefix
+            backend:
+              service:
+                name: billing-service
+                port:
+                  name: http
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  name: http

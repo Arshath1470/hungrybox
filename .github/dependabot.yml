@@ -1,0 +1,24 @@
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      spring:
+        patterns: ["org.springframework*", "io.micrometer*"]
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    groups:
+      frontend:
+        patterns: ["*"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+  - package-ecosystem: docker
+    directories: ["/docker", "/frontend"]
+    schedule:
+      interval: monthly

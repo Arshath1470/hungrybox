@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:billing;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+  kafka:
+    admin:
+      auto-create: false
+
+hungrybox:
+  kafka:
+    listeners-enabled: false
+    create-topics: false
+  billing:
+    max-transaction-amount: 1000

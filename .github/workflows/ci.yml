@@ -1,0 +1,124 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (Maven verify)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Build and test all services
+        run: mvn -B -ntp verify
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: '**/target/surefire-reports/'
+
+  frontend:
+    name: Frontend (test and build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npm run build
+
+  manifests:
+    name: Kubernetes and Compose config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: MySQL init script is identical for Compose and Kubernetes
+        run: cmp docker/mysql/init.sql k8s/base/mysql-init.sql
+      - name: Render kustomization
+        run: kubectl kustomize k8s/base > rendered.yaml
+      - name: Validate against Kubernetes schemas
+        run: |
+          curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.8.0/kubeconform-linux-amd64.tar.gz | tar xz kubeconform
+          ./kubeconform -strict -summary -kubernetes-version 1.30.0 rendered.yaml
+      - name: Validate docker compose file
+        run: docker compose config --quiet
+
+  images:
+    name: Image ${{ matrix.image }}
+    needs: [backend, frontend, manifests]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: user-service
+            context: .
+            dockerfile: docker/service.Dockerfile
+          - image: restaurant-service
+            context: .
+            dockerfile: docker/service.Dockerfile
+          - image: order-service
+            context: .
+            dockerfile: docker/service.Dockerfile
+          - image: billing-service
+            context: .
+            dockerfile: docker/service.Dockerfile
+          - image: frontend
+            context: frontend
+            dockerfile: frontend/Dockerfile
+    steps:
+      - uses: actions/checkout@v5
+      - name: Lower-case image owner (GHCR requires it)
+        run: echo "OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+      - uses: docker/setup-buildx-action@v3
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ env.OWNER }}/hungrybox-${{ matrix.image }}
+          tags: |
+            type=sha,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+      - name: Build image (pushed to GHCR only from main)
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          build-args: SERVICE=${{ matrix.image }}
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
