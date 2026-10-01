@@ -37,6 +37,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@SuppressWarnings("unchecked")
 class OrderApiTest {
 
     private static final long RESTAURANT_ID = 1L;
@@ -57,9 +58,11 @@ class OrderApiTest {
     @MockitoBean
     RestaurantClient restaurantClient;
 
-    // Replace Boot's auto-configured template by name so no broker is needed.
-    @MockitoBean(name = "kafkaTemplate")
-    KafkaTemplate<String, String> kafkaTemplate;
+    // Boot declares its template as KafkaTemplate<?, ?>; mocking the raw type makes the
+    // override match that bean exactly, so tests need no broker.
+    @SuppressWarnings("rawtypes")
+    @MockitoBean
+    KafkaTemplate kafkaTemplate;
 
     private String customerToken;
     private String adminToken;

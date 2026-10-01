@@ -4,6 +4,10 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      # Major upgrades (new framework, JDK or Node majors) are planned work, not weekly bumps.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       spring:
         patterns: ["org.springframework*", "io.micrometer*"]
@@ -11,6 +15,10 @@ updates:
     directory: /frontend
     schedule:
       interval: weekly
+    ignore:
+      # Major upgrades (new framework, JDK or Node majors) are planned work, not weekly bumps.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       frontend:
         patterns: ["*"]
@@ -18,7 +26,15 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    ignore:
+      # Major upgrades (new framework, JDK or Node majors) are planned work, not weekly bumps.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: docker
     directories: ["/docker", "/frontend"]
     schedule:
       interval: monthly
+    ignore:
+      # Major upgrades (new framework, JDK or Node majors) are planned work, not weekly bumps.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]

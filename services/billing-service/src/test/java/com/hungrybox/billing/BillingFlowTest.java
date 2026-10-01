@@ -36,6 +36,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@SuppressWarnings("unchecked")
 class BillingFlowTest {
 
     private static final long CUSTOMER_ID = 21L;
@@ -55,9 +56,11 @@ class BillingFlowTest {
     @Autowired
     InvoiceRepository invoices;
 
-    // Replace Boot's auto-configured template by name so no broker is needed.
-    @MockitoBean(name = "kafkaTemplate")
-    KafkaTemplate<String, String> kafkaTemplate;
+    // Boot declares its template as KafkaTemplate<?, ?>; mocking the raw type makes the
+    // override match that bean exactly, so tests need no broker.
+    @SuppressWarnings("rawtypes")
+    @MockitoBean
+    KafkaTemplate kafkaTemplate;
 
     @BeforeEach
     void setUp() {
@@ -78,7 +81,7 @@ class BillingFlowTest {
         assertThat(invoice.total()).isEqualByComparingTo("386.50");
         assertThat(invoice.invoiceNumber()).endsWith("-001001");
         verify(kafkaTemplate, times(1)).send(eq(Topics.PAYMENT_COMPLETED), eq("1001"),
-                argThat(json -> json.contains("\"status\":\"PAID\"")));
+                argThat((String json) -> json.contains("\"status\":\"PAID\"")));
     }
 
     @Test
@@ -89,7 +92,7 @@ class BillingFlowTest {
         assertThat(invoice.status()).isEqualTo(InvoiceStatus.FAILED);
         assertThat(invoice.failureReason()).contains("limit");
         verify(kafkaTemplate).send(eq(Topics.PAYMENT_COMPLETED), eq("1002"),
-                argThat(json -> json.contains("\"status\":\"FAILED\"")));
+                argThat((String json) -> json.contains("\"status\":\"FAILED\"")));
     }
 
     @Test
