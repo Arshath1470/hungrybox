@@ -18,7 +18,7 @@ jobs:
     name: Backend (Maven verify)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -40,7 +40,7 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v5
         with:
           node-version: '22'
@@ -54,7 +54,7 @@ jobs:
     name: Kubernetes and Compose config
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: MySQL init script is identical for Compose and Kubernetes
         run: cmp docker/mysql/init.sql k8s/base/mysql-init.sql
       - name: Render kustomization
@@ -93,7 +93,7 @@ jobs:
             context: frontend
             dockerfile: frontend/Dockerfile
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Lower-case image owner (GHCR requires it)
         run: echo "OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
       - uses: docker/setup-buildx-action@v3
