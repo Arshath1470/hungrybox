@@ -2,7 +2,7 @@
 # One Dockerfile for every Spring Boot service:
 #   docker build -f docker/service.Dockerfile --build-arg SERVICE=order-service .
 
-FROM maven:3.9-eclipse-temurin-21 AS build
+FROM maven:3.9-eclipse-temurin-26 AS build
 ARG SERVICE
 WORKDIR /workspace
 COPY pom.xml .
